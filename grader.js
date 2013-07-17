@@ -45,13 +45,17 @@ rest.get(program.url).on('complete', function(result) {
     sys.puts('Error: ' + result.message);
     this.retry(5000); // try again after 5 sec
   } else {
-	sys.puts(result);
+    var checkJson2 = checkHtmlFile2(result, program.checks);
   }
 });
 }
 
 var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
+};
+
+var cheerioHtmlFile2 = function(htmlfile) {
+    return cheerio.load(htmlfile);
 };
 
 var loadChecks = function(checksfile) {
@@ -69,6 +73,19 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+
+var checkHtmlFile2 = function(htmlfile, checksfile) {
+    $ = cheerioHtmlFile2(htmlfile);
+    var checks = loadChecks(checksfile).sort();
+    var out = {};
+    for(var ii in checks) {
+        var present = $(checks[ii]).length > 0;
+        out[checks[ii]] = present;
+    }
+    return out;
+};
+
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -82,6 +99,7 @@ if(require.main == module) {
 	.option('-u, --url', 'path to url')
         .parse(process.argv);
     var checkJson = checkHtmlFile(program.file, program.checks);
+    var checkJson2 = checkHtmlFile2(program.url, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
